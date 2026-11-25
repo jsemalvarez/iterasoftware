@@ -13,11 +13,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Itera Software — Próximamente",
+  title: "Itera Software — Software para la industria",
   description:
-    "Software a medida para la industria y automatización de procesos con inteligencia artificial. Muy pronto.",
+    "Software a medida para la industria y automatización de procesos con inteligencia artificial.",
   openGraph: {
-    title: "Itera Software — Próximamente",
+    title: "Itera Software — Software para la industria",
     description:
       "Software a medida para la industria y automatización de procesos con inteligencia artificial.",
     type: "website",
