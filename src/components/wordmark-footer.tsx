@@ -1,6 +1,5 @@
 import { LocalTime } from "@/components/local-time";
 import { Logo } from "@/components/logo";
-import { Reveal } from "@/components/reveal";
 
 type Column = { title: string; links: { href: string; label: string }[] };
 
@@ -11,7 +10,6 @@ function Letters({ mirror = false }: { mirror?: boolean }) {
     <span
       key={i}
       className={`wm-letter ${i === 0 || i === 4 ? "text-accent" : i > 4 ? "text-foreground/45" : "text-foreground"}`}
-      style={mirror ? undefined : { transitionDelay: `${200 + i * 60}ms` }}
     >
       <span className={mirror ? undefined : "wm-glyph"}>{l}</span>
     </span>
@@ -19,9 +17,9 @@ function Letters({ mirror = false }: { mirror?: boolean }) {
 }
 
 /**
- * Footer con el nombre a todo el ancho: las letras suben desde una línea de
+ * Footer con el nombre a todo el ancho: las letras se apoyan en una línea de
  * piso y se reflejan debajo. Adaptado de "Wordmark Reveal Footer"
- * (21st.dev, dhxwhy), animado solo con CSS sobre el componente Reveal.
+ * (21st.dev, dhxwhy).
  */
 export function WordmarkFooter({ blurb, columns }: { blurb: string; columns: Column[] }) {
   return (
@@ -69,19 +67,19 @@ export function WordmarkFooter({ blurb, columns }: { blurb: string; columns: Col
           </span>
         </div>
 
-        <Reveal className="wm mt-10">
+        <div className="wm mt-10">
           <div aria-hidden className="select-none">
-            <div className="wm-row wm-rise">
+            <div className="wm-row">
               <Letters />
             </div>
-            <div className="draw-line h-px w-full bg-gradient-to-r from-accent via-accent/40 to-line" />
+            <div className="h-px w-full bg-gradient-to-r from-accent via-accent/40 to-line" />
             <div className="wm-mirror">
               <div className="wm-row">
                 <Letters mirror />
               </div>
             </div>
           </div>
-        </Reveal>
+        </div>
 
         <div className="flex flex-wrap items-center justify-between gap-4 pb-8 pt-2 font-mono text-xs text-muted">
           <span>© 2026 Itera Software · Software · Industria · IA</span>

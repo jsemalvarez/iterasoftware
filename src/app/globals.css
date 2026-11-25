@@ -527,22 +527,6 @@ html {
   transform: scaleY(-1);
   filter: blur(1px);
 }
-@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
-  .reveal .wm-rise .wm-letter {
-    transform: translateY(110%);
-    transition: transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-  .reveal.is-visible .wm-rise .wm-letter {
-    transform: none;
-  }
-  .reveal .wm-mirror {
-    opacity: 0;
-    transition: opacity 0.6s ease 1.5s;
-  }
-  .reveal.is-visible .wm-mirror {
-    opacity: 0.16;
-  }
-}
 
 /* ── Timeline que se llena con el scroll (v1a) ── */
 .timeline {
