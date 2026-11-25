@@ -30,7 +30,7 @@ export function WordmarkFooter({ blurb, columns }: { blurb: string; columns: Col
             <Logo />
             <p className="mt-4 text-sm leading-relaxed text-muted">{blurb}</p>
           </div>
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-8 *:min-w-0 sm:grid-cols-[repeat(auto-fit,minmax(9rem,1fr))]">
             {columns.map((c) => (
               <nav key={c.title} aria-label={c.title}>
                 <p className="font-mono text-xs uppercase tracking-widest text-accent">{c.title}</p>
@@ -39,7 +39,7 @@ export function WordmarkFooter({ blurb, columns }: { blurb: string; columns: Col
                     <li key={l.label}>
                       <a
                         href={l.href}
-                        className="inline-block text-sm text-foreground/75 transition-all duration-300 hover:translate-x-1 hover:text-accent"
+                        className="inline-block wrap-anywhere text-sm text-foreground/75 transition-all duration-300 hover:translate-x-1 hover:text-accent"
                       >
                         {l.label}
                       </a>

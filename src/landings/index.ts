@@ -16,7 +16,7 @@ export type LandingVersion = {
 /**
  * Registro de versiones de la landing.
  * Para sumar una nueva: crear src/landings/<slug>.tsx y agregarla acá.
- * La primera de la lista es la que se muestra en "/".
+ * La que se muestra en "/" se elige abajo, en `currentSlug`.
  */
 export const landingVersions: LandingVersion[] = [
   {
@@ -40,7 +40,7 @@ export const landingVersions: LandingVersion[] = [
     label: "v1c · Ciudad circuito",
     date: "2026-11",
     notes:
-      "Hero 3D con una placa de circuito como ciudad, recorrido por capas con scroll, servicios interactivos, proceso y contacto.",
+      "Hero 3D con una placa de circuito como ciudad, software a medida por capas, bots, capacitaciones y contacto.",
     Component: LandingV1c,
   },
   {
@@ -59,7 +59,10 @@ export const landingVersions: LandingVersion[] = [
   },
 ];
 
-export const currentLanding = landingVersions[0];
+/** Versión publicada en "/" hasta definir el diseño final. */
+const currentSlug = "proximamente";
+
+export const currentLanding = landingVersions.find((v) => v.slug === currentSlug) ?? landingVersions[0];
 
 export function getLanding(slug: string) {
   return landingVersions.find((v) => v.slug === slug);

@@ -11,6 +11,8 @@ export type SceneInput = {
   reduced: boolean;
   /** Avance del scroll dentro de [data-scene-track], de 0 a 1. */
   progress: number;
+  /** Cuánto se encendió la escena desde afuera: de 0 a 1, o 2 para festejar. */
+  energy: number;
 };
 
 export type SceneInstance = {

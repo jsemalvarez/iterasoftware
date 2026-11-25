@@ -220,7 +220,7 @@ function chipLabel(chip: Chip) {
 }
 
 /** Placa de circuito como ciudad de noche: chips-edificio, pistas-calle y señales-tráfico. */
-export function createCircuitCity(onStats?: (a: number, b: number) => void): SceneInstance {
+export function createCircuitCity(onStats?: (a: number, b: number) => void, finale = false): SceneInstance {
   const rnd = mulberry(14);
   const scene = new Scene();
   scene.environmentIntensity = 0.16;
@@ -400,8 +400,10 @@ export function createCircuitCity(onStats?: (a: number, b: number) => void): Sce
   }
 
   const box = new BoxGeometry(1, 1, 1);
+  const facades: MeshStandardMaterial[] = [];
   towers.forEach((places, i) => {
     const facade = new MeshStandardMaterial({ color: 0x171c22, roughness: 0.6, metalness: 0.2, emissive: 0xffffff, emissiveMap: windowTexture(rnd, 0.16 + i * 0.1), emissiveIntensity: 0.85 });
+    facades.push(facade);
     instances(box, [facade, facade, epoxy, epoxy, facade, facade], places);
   });
   instances(new CylinderGeometry(1, 1, 0.12, 28).translate(0, 0.06, 0), epoxy, caps.map((c) => ({ ...c, sx: c.sx! * 1.1, sz: c.sz! * 1.1, sy: 1 })));
@@ -508,10 +510,12 @@ export function createCircuitCity(onStats?: (a: number, b: number) => void): Sce
   const heart = new PointLight(ACCENT, 60, 16);
   heart.position.set(0, 3.4, 0.5);
   scene.add(heart);
+  const lamps: PointLight[] = [];
   for (const [x, z] of [[-6.4, 2], [6.5, 2.4], [2, -6]]) {
     const lamp = new PointLight(WARM, 22, 9);
     lamp.position.set(x, 1.7, z);
     scene.add(lamp);
+    lamps.push(lamp);
   }
 
   const look = new Vector3();
@@ -520,6 +524,8 @@ export function createCircuitCity(onStats?: (a: number, b: number) => void): Sce
   let distance = 25;
   let arrivals = 0;
   let reported = 0;
+  let lit = finale ? 0.15 : 1; // cuánta ciudad está encendida
+  let wave = 0;
 
   return {
     scene,
@@ -530,7 +536,23 @@ export function createCircuitCity(onStats?: (a: number, b: number) => void): Sce
       distance = portrait ? Math.min(36, 14 / aspect) : 25;
       fog.density = 0.62 / distance;
     },
-    update({ time, delta, pointerX, pointerY, reduced }) {
+    update({ time, delta, pointerX, pointerY, reduced, energy }) {
+      if (finale) {
+        const goal = 0.15 + 0.85 * Math.min(1, energy);
+        lit += (goal - lit) * (reduced ? 1 : Math.min(1, delta * 1.6));
+        facades.forEach((f) => (f.emissiveIntensity = 0.12 + lit * 0.88));
+        gold.emissiveIntensity = 0.01 + lit * 0.4;
+        scene.environmentIntensity = 0.05 + lit * 0.15;
+        moon.intensity = 0.5 + lit * 0.6;
+        lamps.forEach((l) => (l.intensity = 3 + lit * 32));
+        trafficGeometry.setDrawRange(0, Math.ceil(signals.length * (0.12 + lit * 0.88)) * TRAIL);
+        // Mensaje enviado: una onda de luz sale del centro
+        if (energy > 1) {
+          wave = (wave + delta * 11) % 30;
+          for (const b of buildings) if (Math.abs(Math.hypot(b.chip.x, b.chip.z) - wave) < 0.8) b.energy = 1.4;
+        }
+      }
+
       signals.forEach((s, i) => {
         s.pos += s.speed * delta;
         if (s.pos > s.street.total + 1.2) {
@@ -545,14 +567,16 @@ export function createCircuitCity(onStats?: (a: number, b: number) => void): Sce
       });
       positions.needsUpdate = true;
 
-      buildings.forEach((b) => {
+      buildings.forEach((b, i) => {
+        // Se encienden de adentro hacia afuera
+        const on = b.core ? 0.4 + lit * 0.6 : 0.06 + 0.94 * Math.min(1, Math.max(0, lit * buildings.length - i + 0.5));
         b.energy += (0.3 - b.energy) * Math.min(1, delta * 2.2);
         const base = b.core ? 0.6 : 0.26;
-        b.poolMaterial.opacity = base + b.energy * (b.core ? 0.2 : 0.32);
-        b.strip.color.setHex(WARM).multiplyScalar(0.35 + b.energy * 0.9);
-        if (!b.core) b.labelMaterial.opacity = 0.55 + b.energy * 0.45;
+        b.poolMaterial.opacity = (base + b.energy * (b.core ? 0.2 : 0.32)) * on;
+        b.strip.color.setHex(WARM).multiplyScalar((0.35 + b.energy * 0.9) * on);
+        if (!b.core) b.labelMaterial.opacity = (0.55 + b.energy * 0.45) * (0.4 + on * 0.6);
       });
-      heart.intensity = 55 + Math.sin(time * 1.6) * 12;
+      heart.intensity = (55 + Math.sin(time * 1.6) * 12) * (finale ? 0.25 + lit * 0.95 : 1);
       leds.forEach(({ color }, i) => {
         const blink = 0.25 + 0.35 * Math.max(0, Math.sin(time * (0.7 + (i % 5) * 0.35) + i * 1.7));
         tint.setHex(color).multiplyScalar(blink).toArray(haloColors.array, i * 3);
@@ -562,6 +586,19 @@ export function createCircuitCity(onStats?: (a: number, b: number) => void): Sce
       if (onStats && time - reported > 0.4) {
         reported = time;
         onStats(arrivals, signals.filter((s) => s.pos < s.street.total).length);
+      }
+
+      if (finale) {
+        // Vuelta a casa: baja desde lo alto hasta el chip central
+        const t = reduced ? 1 : Math.min(1, time / 5);
+        const fall = 1 - (1 - t) ** 3;
+        const angle = 0.5 + Math.sin(time * 0.06) * 0.1 + pointerX * 0.05 + (1 - fall) * 0.5;
+        const pitch = 1.1 - fall * 0.46 - pointerY * 0.03;
+        const reach = distance * (1.6 - fall * 0.5);
+        camera.position.set(Math.sin(angle) * Math.cos(pitch) * reach, Math.sin(pitch) * reach, Math.cos(angle) * Math.cos(pitch) * reach);
+        camera.lookAt(look);
+        camera.setViewOffset(frameWidth, 1000, portrait ? 0 : frameWidth * 0.24, portrait ? -140 : -210, frameWidth, 1000);
+        return;
       }
 
       // Vuelo lento: arranca al ras de la calle y sube hasta ver la ciudad
@@ -576,3 +613,6 @@ export function createCircuitCity(onStats?: (a: number, b: number) => void): Sce
     },
   };
 }
+
+/** La misma ciudad para el cierre: arranca a oscuras y la enciende el formulario. */
+export const createCityFinale = () => createCircuitCity(undefined, true);

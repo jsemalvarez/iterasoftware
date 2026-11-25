@@ -12,13 +12,14 @@ export function Scene3D({
   className = "",
   fallback,
   onStats,
-}: MountOptions & { className?: string; fallback?: ReactNode }) {
+  energy = 0,
+}: Omit<MountOptions, "getEnergy"> & { className?: string; fallback?: ReactNode; energy?: number }) {
   const ref = useRef<HTMLDivElement>(null);
-  const callbacks = useRef({ onStats });
+  const latest = useRef({ onStats, energy });
   const [state, setState] = useState<"loading" | "ready" | "failed">("loading");
 
   useEffect(() => {
-    callbacks.current = { onStats };
+    latest.current = { onStats, energy };
   });
 
   useEffect(() => {
@@ -33,11 +34,14 @@ export function Scene3D({
         try {
           const { mountScene } = await import("@/three/mount");
           if (cancelled) return;
-          unmount = mountScene(el, {
+          const mounted = mountScene(el, {
             name,
-            onStats: (a, b) => callbacks.current.onStats?.(a, b),
+            onStats: (a, b) => latest.current.onStats?.(a, b),
+            getEnergy: () => latest.current.energy,
           });
-          setState("ready");
+          unmount = mounted.unmount;
+          await mounted.ready;
+          if (!cancelled) setState("ready");
         } catch {
           if (!cancelled) setState("failed");
         }

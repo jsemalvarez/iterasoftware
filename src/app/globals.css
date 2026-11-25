@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+/* Texto y escena lado a lado: pantallas anchas, o medianas y apaisadas */
+@custom-variant side {
+  @media (width >= 64rem), ((width >= 40rem) and (aspect-ratio >= 1)) {
+    @slot;
+  }
+}
+
+/* Ventanas casi cuadradas: no sobra lugar ni al costado ni arriba */
+@custom-variant square {
+  @media (width >= 48rem) and (aspect-ratio >= 0.85) and (aspect-ratio < 1.25) {
+    @slot;
+  }
+}
+
+/* Ventanas bajas, como un celular acostado */
+@custom-variant short {
+  @media (height < 36rem) {
+    @slot;
+  }
+}
+
 :root {
   --background: #0b0f14;
   --foreground: #e8edf2;
@@ -552,5 +573,60 @@ html {
   .wm-letter:hover .wm-glyph {
     transition: none;
     translate: none;
+  }
+}
+
+/* Revisión del plano: cada cambio entra con un destello */
+.rev-in {
+  animation: rev-in 0.7s ease-out;
+}
+
+@keyframes rev-in {
+  from {
+    background: color-mix(in srgb, var(--accent) 45%, transparent);
+    color: var(--foreground);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rev-in {
+    animation: none;
+  }
+}
+
+/* Tarjeta con forma de chip: patas metálicas que se encienden con --energy */
+.chip-card::before,
+.chip-card::after {
+  content: "";
+  position: absolute;
+  --pin: color-mix(in oklab, var(--accent) calc(var(--energy, 0) * 100%), #4a545f);
+}
+
+.chip-card::before {
+  inset: 28px -9px;
+  background: repeating-linear-gradient(var(--pin) 0 7px, transparent 7px 22px);
+}
+
+.chip-card::after {
+  inset: -9px 28px;
+  z-index: -1;
+  background: repeating-linear-gradient(90deg, var(--pin) 0 7px, transparent 7px 22px);
+}
+
+/* Tilde que se dibuja al enviar */
+.check-draw {
+  stroke-dasharray: 1;
+  animation: check-draw 0.7s 0.15s ease-out backwards;
+}
+
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .check-draw {
+    animation: none;
   }
 }

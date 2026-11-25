@@ -1,46 +1,106 @@
 import {
   ACESFilmicToneMapping,
+  DirectionalLight,
   Material,
   Mesh,
   PCFShadowMap,
   PMREMGenerator,
   Texture,
   WebGLRenderer,
+  type Object3D,
+  type Scene,
+  type WebGLRenderTarget,
 } from "three";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { scrollProgress } from "@/lib/scroll-progress";
-import { createCircuitCity } from "./circuit-city";
+import { createBlueprint } from "./blueprint";
+import { createCircuitCity, createCityFinale } from "./circuit-city";
 import { createFactoryLine } from "./factory-line";
 import { createLayerStack } from "./layer-stack";
+import { createTrainingRoom } from "./training-room";
 import type { SceneInstance } from "./types";
 
-const scenes = { city: createCircuitCity, factory: createFactoryLine, layers: createLayerStack };
+const scenes = {
+  city: createCircuitCity,
+  factory: createFactoryLine,
+  layers: createLayerStack,
+  blueprint: createBlueprint,
+  training: createTrainingRoom,
+  finale: createCityFinale,
+};
 
 export type SceneName = keyof typeof scenes;
 
 export type MountOptions = {
   name: SceneName;
   onStats?: (a: number, b: number) => void;
+  /** Se consulta en cada cuadro (ver SceneInput.energy). */
+  getEnergy?: () => number;
 };
 
-/** Monta una escena en el contenedor. Lanza un error si no hay WebGL. */
-export function mountScene(container: HTMLElement, { name, onStats }: MountOptions) {
+/**
+ * La placa de video termina de preparar cada tipo de material recién cuando lo
+ * dibuja por primera vez. Esto devuelve pasos que muestran de a un tipo, y un
+ * último paso que deja la escena como estaba.
+ */
+function variants(scene: Scene) {
+  const drawables: { object: Object3D; visible: boolean }[] = [];
+  const kinds = new Map<string, Object3D>();
+  scene.traverse((object) => {
+    if (!("material" in object)) return;
+    drawables.push({ object, visible: object.visible });
+    for (const m of ([] as Material[]).concat(object.material as Material)) {
+      const maps = Object.entries(m).filter(([, v]) => v instanceof Texture);
+      const kind = [object.type, m.type, m.side, m.transparent, m.vertexColors, m.clippingPlanes?.length, object.castShadow, ...maps.map(([k]) => k)];
+      kinds.set(kind.join(), object);
+    }
+  });
+  const show = (only?: Object3D) => {
+    for (const { object, visible } of drawables) object.visible = only ? object === only : visible;
+  };
+  return [
+    ...[...new Set(kinds.values())].map((object) => () => show(object)),
+    () => {
+      show();
+      // Las sombras fijas se calcularon con la escena a medio mostrar
+      scene.traverse((o) => {
+        if (o instanceof DirectionalLight) o.shadow.needsUpdate = true;
+      });
+    },
+  ];
+}
+
+/** Le devuelve el control al navegador entre dos trabajos pesados. */
+const breathe = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/**
+ * Monta una escena en el contenedor. Lanza un error si no hay WebGL.
+ * La preparación va por partes, y los shaders se compilan en segundo plano,
+ * para no trabar el scroll; `ready` avisa cuando se ve el primer cuadro.
+ */
+export function mountScene(container: HTMLElement, { name, onStats, getEnergy }: MountOptions) {
   const renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
   let quality = Math.min(window.devicePixelRatio, 1.75);
   renderer.setPixelRatio(quality);
   renderer.toneMapping = ACESFilmicToneMapping;
+  renderer.localClippingEnabled = true;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = PCFShadowMap;
   renderer.domElement.className = "absolute inset-0 size-full";
   container.appendChild(renderer.domElement);
 
   const instance: SceneInstance = scenes[name](onStats);
-  const pmrem = new PMREMGenerator(renderer);
-  const room = new RoomEnvironment();
-  const environment = pmrem.fromScene(room, 0.04);
-  room.dispose();
-  pmrem.dispose();
-  instance.scene.environment = environment.texture;
+  let environment: WebGLRenderTarget | undefined;
+  let disposed = false;
+
+  function light() {
+    const pmrem = new PMREMGenerator(renderer);
+    const room = new RoomEnvironment();
+    environment = pmrem.fromScene(room, 0.04);
+    room.dispose();
+    pmrem.dispose();
+    instance.scene.environment = environment.texture;
+  }
 
   const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
   let raf = 0;
@@ -53,12 +113,16 @@ export function mountScene(container: HTMLElement, { name, onStats }: MountOptio
   let pointerY = 0;
   let progress = scrollProgress(container);
 
-  function render(delta: number) {
+  function update(delta: number) {
     const target = scrollProgress(container);
     progress = motion.matches ? target : progress + (target - progress) * Math.min(1, delta * 7);
     pointerX += (targetX - pointerX) * Math.min(1, delta * 4);
     pointerY += (targetY - pointerY) * Math.min(1, delta * 4);
-    instance.update({ time, delta, pointerX, pointerY, progress, reduced: motion.matches });
+    instance.update({ time, delta, pointerX, pointerY, progress, energy: getEnergy?.() ?? 0, reduced: motion.matches });
+  }
+
+  function render(delta: number) {
+    update(delta);
     renderer.render(instance.scene, instance.camera);
   }
 
@@ -89,14 +153,18 @@ export function mountScene(container: HTMLElement, { name, onStats }: MountOptio
     raf = requestAnimationFrame(loop);
   }
 
-  function resize() {
+  function fit() {
     const { clientWidth: w, clientHeight: h } = container;
-    if (!w || !h) return;
+    if (!w || !h) return false;
     renderer.setSize(w, h, false);
     instance.camera.aspect = w / h;
     instance.resize?.(w / h);
     instance.camera.updateProjectionMatrix();
-    render(0);
+    return true;
+  }
+
+  function resize() {
+    if (fit()) render(0);
   }
 
   function onPointer(e: PointerEvent) {
@@ -111,20 +179,39 @@ export function mountScene(container: HTMLElement, { name, onStats }: MountOptio
   }
 
   const ro = new ResizeObserver(resize);
-  ro.observe(container);
   const io = new IntersectionObserver(([entry]) => {
     visible = entry?.isIntersecting ?? true;
   });
-  io.observe(container);
-  window.addEventListener("pointermove", onPointer, { passive: true });
-  window.addEventListener("scroll", onScroll, { passive: true });
-  resize();
-  raf = requestAnimationFrame((now) => {
-    last = now;
-    loop(now);
-  });
 
-  return () => {
+  async function start() {
+    await breathe();
+    if (disposed) return;
+    light();
+    await breathe();
+    if (disposed) return;
+    fit();
+    update(0);
+    await renderer.compileAsync(instance.scene, instance.camera);
+    if (disposed) return;
+    for (const group of variants(instance.scene)) {
+      group();
+      renderer.render(instance.scene, instance.camera);
+      await breathe();
+      if (disposed) return;
+    }
+    ro.observe(container);
+    io.observe(container);
+    window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    resize();
+    raf = requestAnimationFrame((now) => {
+      last = now;
+      loop(now);
+    });
+  }
+
+  const unmount = () => {
+    disposed = true;
     cancelAnimationFrame(raf);
     ro.disconnect();
     io.disconnect();
@@ -134,13 +221,15 @@ export function mountScene(container: HTMLElement, { name, onStats }: MountOptio
       if (!(o instanceof Mesh)) return;
       o.geometry.dispose();
       for (const m of ([] as Material[]).concat(o.material)) {
-        for (const v of Object.values(m)) if (v instanceof Texture && v !== environment.texture) v.dispose();
+        for (const v of Object.values(m)) if (v instanceof Texture && v !== environment?.texture) v.dispose();
         m.dispose();
       }
     });
-    environment.dispose();
+    environment?.dispose();
     renderer.dispose();
     renderer.forceContextLoss();
     renderer.domElement.remove();
   };
+
+  return { ready: start(), unmount };
 }
