@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Formulario de contacto
+
+La landing v1c envía los mensajes por correo con [Resend](https://resend.com). Para que funcione hay que definir estas variables en `.env.local` (y en el hosting):
+
+| Variable | Qué es |
+| --- | --- |
+| `RESEND_API_KEY` | Clave de la cuenta de Resend |
+| `CONTACT_TO` | Casilla que recibe las consultas |
+| `CONTACT_FROM` | Remitente, con un dominio verificado en Resend. Por ejemplo `Itera Software <web@iterasoftware.com>` |
+
+Sin esas variables, en desarrollo el formulario funciona en modo de prueba (no envía nada) y en producción muestra un error con el correo de contacto.

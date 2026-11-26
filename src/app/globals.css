@@ -1,5 +1,26 @@
 @import "tailwindcss";
 
+/* Texto y escena lado a lado: pantallas anchas, o medianas y apaisadas */
+@custom-variant side {
+  @media (width >= 64rem), ((width >= 40rem) and (aspect-ratio >= 1)) {
+    @slot;
+  }
+}
+
+/* Ventanas casi cuadradas: no sobra lugar ni al costado ni arriba */
+@custom-variant square {
+  @media (width >= 48rem) and (aspect-ratio >= 0.85) and (aspect-ratio < 1.25) {
+    @slot;
+  }
+}
+
+/* Ventanas bajas, como un celular acostado */
+@custom-variant short {
+  @media (height < 36rem) {
+    @slot;
+  }
+}
+
 :root {
   --background: #0b0f14;
   --foreground: #e8edf2;
@@ -67,6 +88,246 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .scanline,
   .rotate-slow {
+    animation: none;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Entrada del hero */
+.fade-up {
+  animation: fade-up 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Cinta de clientes */
+.marquee {
+  animation: marquee 40s linear infinite;
+}
+
+/* La cinta se frena para leer un logo */
+.marquee-mask:hover .marquee {
+  animation-play-state: paused;
+}
+
+.marquee-mask {
+  mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .fade-up,
+  .marquee {
+    animation: none;
+  }
+}
+
+/* Haces del diagrama de integración (pathLength = 200) */
+.beam {
+  animation: beam 3s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+}
+
+.beam-reverse {
+  animation-name: beam-reverse;
+}
+
+@keyframes beam {
+  from {
+    stroke-dashoffset: 200;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes beam-reverse {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: 200;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .beam {
+    animation: none;
+  }
+}
+
+/* ── Aparición al hacer scroll (componente Reveal) ── */
+@media (scripting: enabled) {
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.9s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+/* Grano sutil sobre toda la página */
+.grain::after {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Halo de luz detrás de bloques destacados */
+.glow-top {
+  background: radial-gradient(60% 50% at 50% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 70%);
+}
+
+.footer-metal {
+  padding-bottom: 0.12em;
+  color: transparent;
+  background: linear-gradient(var(--foreground) 20%, color-mix(in srgb, var(--foreground) 45%, transparent));
+  background-clip: text;
+}
+.magnetic {
+  display: inline-flex;
+  align-items: center;
+  translate: var(--tx, 0) var(--ty, 0);
+  transition:
+    translate 0.5s cubic-bezier(0.34, 1.8, 0.64, 1),
+    color 0.3s,
+    border-color 0.3s;
+}
+
+/* ── Footer con nombre gigante ── */
+.wm {
+  container-type: inline-size;
+}
+.wm-row {
+  display: flex;
+  justify-content: space-between;
+  overflow: hidden;
+  font-size: 15.2cqw;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  /* Recorta el espacio bajo la línea de base para apoyar las letras en el piso */
+  height: 0.84em;
+}
+.wm-letter,
+.wm-glyph {
+  display: inline-block;
+}
+.wm-glyph {
+  transition:
+    translate 0.25s ease-out,
+    color 0.25s;
+}
+.wm-letter:hover .wm-glyph {
+  translate: 0 -0.04em;
+  color: var(--accent);
+}
+.wm-mirror {
+  height: 6cqw;
+  overflow: hidden;
+  opacity: 0.16;
+  mask-image: linear-gradient(black, transparent);
+}
+.wm-mirror .wm-row {
+  transform: scaleY(-1);
+  filter: blur(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .magnetic,
+  .wm-letter:hover .wm-glyph {
+    transition: none;
+    translate: none;
+  }
+}
+
+/* Revisión del plano: cada cambio entra con un destello */
+.rev-in {
+  animation: rev-in 0.7s ease-out;
+}
+
+@keyframes rev-in {
+  from {
+    background: color-mix(in srgb, var(--accent) 45%, transparent);
+    color: var(--foreground);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rev-in {
+    animation: none;
+  }
+}
+
+/* Tarjeta con forma de chip: patas metálicas que se encienden con --energy */
+.chip-card::before,
+.chip-card::after {
+  content: "";
+  position: absolute;
+  --pin: color-mix(in oklab, var(--accent) calc(var(--energy, 0) * 100%), #4a545f);
+}
+
+.chip-card::before {
+  inset: 28px -9px;
+  background: repeating-linear-gradient(var(--pin) 0 7px, transparent 7px 22px);
+}
+
+.chip-card::after {
+  inset: -9px 28px;
+  z-index: -1;
+  background: repeating-linear-gradient(90deg, var(--pin) 0 7px, transparent 7px 22px);
+}
+
+/* Tilde que se dibuja al enviar */
+.check-draw {
+  stroke-dasharray: 1;
+  animation: check-draw 0.7s 0.15s ease-out backwards;
+}
+
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .check-draw {
     animation: none;
   }
 }
