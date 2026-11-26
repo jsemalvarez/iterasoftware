@@ -15,14 +15,12 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { scrollProgress } from "@/lib/scroll-progress";
 import { createBlueprint } from "./blueprint";
 import { createCircuitCity, createCityFinale } from "./circuit-city";
-import { createFactoryLine } from "./factory-line";
 import { createLayerStack } from "./layer-stack";
 import { createTrainingRoom } from "./training-room";
 import type { SceneInstance } from "./types";
 
 const scenes = {
   city: createCircuitCity,
-  factory: createFactoryLine,
   layers: createLayerStack,
   blueprint: createBlueprint,
   training: createTrainingRoom,

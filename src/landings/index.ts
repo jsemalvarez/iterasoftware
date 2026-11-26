@@ -1,11 +1,9 @@
 import type { ComponentType } from "react";
 import LandingProximamente from "./proximamente";
-import LandingV1a from "./v1a";
-import LandingV1b from "./v1b";
-import LandingV1c, { LandingV1cLinea } from "./v1c";
+import LandingV1c from "./v1c";
 
 export type LandingVersion = {
-  /** Segmento de la URL: /v1a, /v1b, ... */
+  /** Segmento de la URL: /v1c, ... */
   slug: string;
   label: string;
   date: string;
@@ -20,35 +18,12 @@ export type LandingVersion = {
  */
 export const landingVersions: LandingVersion[] = [
   {
-    slug: "v1a",
-    label: "v1a · Partículas",
-    date: "2026-11",
-    notes:
-      "Hero centrado con partículas interactivas, cinta de sectores, servicios en bento, proceso, diferenciales y contacto.",
-    Component: LandingV1a,
-  },
-  {
-    slug: "v1b",
-    label: "v1b · Planta conectada",
-    date: "2026-11",
-    notes:
-      "Hero dividido con diagrama de integración animado, hoy vs. con Itera, servicios en lista, primer proyecto, preguntas frecuentes y cierre en banda ámbar.",
-    Component: LandingV1b,
-  },
-  {
     slug: "v1c",
     label: "v1c · Ciudad circuito",
     date: "2026-11",
     notes:
-      "Hero 3D con una placa de circuito como ciudad, software a medida por capas, bots, capacitaciones y contacto.",
+      "Hero 3D con una placa de circuito como ciudad, software a medida por capas, bots, capacitaciones, clientes y contacto.",
     Component: LandingV1c,
-  },
-  {
-    slug: "v1c-linea",
-    label: "v1c · Línea de producción",
-    date: "2026-11",
-    notes: "Igual a v1c, con una línea de producción 3D en el hero.",
-    Component: LandingV1cLinea,
   },
   {
     slug: "proximamente",

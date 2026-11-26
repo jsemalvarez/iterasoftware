@@ -1,12 +1,14 @@
 import { BuildStory } from "@/components/build-story";
+import { ClientsSection } from "@/components/clients-section";
 import { ContactSection } from "@/components/contact-section";
 import { IntegrationBeams } from "@/components/integration-beams";
 import { LayerStory } from "@/components/layer-story";
 import { Logo } from "@/components/logo";
 import { MagneticLink } from "@/components/magnetic";
-import { SceneHero, type HeroScene } from "@/components/scene-hero";
+import { SceneHero } from "@/components/scene-hero";
 import { TrainingStory } from "@/components/training-story";
 import { WordmarkFooter } from "@/components/wordmark-footer";
+import { clients } from "@/lib/clients";
 import { serviceLabel, services } from "@/lib/services";
 import { softwareLayers } from "@/lib/software-layers";
 import { trainingModules } from "@/lib/training";
@@ -18,6 +20,7 @@ const nav = [
   { href: "#software", label: "Software a medida" },
   { href: "#bots", label: "Bots" },
   { href: "#capacitaciones", label: "Capacitaciones" },
+  { href: "#clientes", label: "Clientes" },
   { href: "#contacto", label: "Contacto" },
 ];
 
@@ -28,17 +31,7 @@ const steps = [
   { title: "Iteración", text: "Cada ciclo mejora lo que ya funciona." },
 ];
 
-const heroTitle: Record<HeroScene, [string, string]> = {
-  city: ["Toda tu planta,", "un solo circuito."],
-  factory: ["Tu línea ve,", "aprende y mejora."],
-};
-
-/** v1c con la línea de producción en el hero, para comparar. */
-export function LandingV1cLinea() {
-  return <LandingV1c scene="factory" />;
-}
-
-export default function LandingV1c({ scene = "city" }: { scene?: HeroScene }) {
+export default function LandingV1c() {
   return (
     <div className="grain relative flex flex-1 flex-col">
       <header className="sticky top-0 z-30 h-[4.5rem] border-b border-line/60 bg-background/60 backdrop-blur-md">
@@ -60,14 +53,14 @@ export default function LandingV1c({ scene = "city" }: { scene?: HeroScene }) {
       </header>
 
       <main id="inicio" className="flex-1">
-        <SceneHero scene={scene} fallback={<IntegrationBeams />}>
+        <SceneHero scene="city" fallback={<IntegrationBeams />}>
           <div className="max-w-xl">
             <p className="fade-up font-mono text-xs uppercase tracking-widest text-accent">Software · Industria · IA</p>
             <h1
               className="fade-up mt-6 text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-7xl"
               style={{ animationDelay: "80ms" }}
             >
-              {heroTitle[scene][0]} <span className="text-accent">{heroTitle[scene][1]}</span>
+              Toda tu planta, <span className="text-accent">un solo circuito.</span>
             </h1>
             <p className="fade-up mt-6 max-w-md text-lg text-muted" style={{ animationDelay: "160ms" }}>
               Software a medida e inteligencia artificial para empresas industriales, desde la primera máquina hasta el tablero.
@@ -95,6 +88,8 @@ export default function LandingV1c({ scene = "city" }: { scene?: HeroScene }) {
           topic="Capacitaciones"
           modules={trainingModules}
         />
+
+        <ClientsSection clients={clients} />
 
         <ContactSection email={CONTACT_EMAIL} />
       </main>

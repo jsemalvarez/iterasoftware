@@ -3,17 +3,13 @@
 import { useState, type ReactNode } from "react";
 import { Scene3D } from "@/components/scene-3d";
 
-export type HeroScene = "city" | "factory";
+export type HeroScene = "city";
 
 /** Qué muestra el contador de la simulación en cada escena. */
 const hud: Record<HeroScene, [label: string, className: string][]> = {
   city: [
     ["Señales entregadas", "text-accent"],
     ["En tránsito", "text-foreground"],
-  ],
-  factory: [
-    ["Inspeccionadas", "text-foreground"],
-    ["Apartadas", "text-red-400"],
   ],
 };
 
